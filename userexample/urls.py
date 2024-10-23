@@ -2,10 +2,13 @@ from tastypie.api import Api
 from django.conf.urls import url, include, url
 from django.contrib import admin
 
-from cinema.api import UserResource
+from cinema.api import RoomResource, SessionResource, UserResource
+
 
 v1_api = Api(api_name='v1')
 v1_api.register(UserResource())
+v1_api.register(RoomResource())
+v1_api.register(SessionResource())
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
