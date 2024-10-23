@@ -22,27 +22,37 @@ class Room(models.Model):
     def total_seats(self):
         return self.rows * self.columns
     
-    def create_seats(self, session):
-        for row in range(1, self.rows+1):
-            for column in range(1, self.columns+1):
-                Seat.objects.create(
-                    row=row,
-                    column=column,
-                    room=self,
-                    session=session
-                )
-    
     def __str__(self):
         return self.name
 
 
 class Session(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, related_name='sessions', on_delete=models.CASCADE)
     start_time = models.TimeField()
     end_time = models.TimeField()
 
     def __str__(self):
         return '%s %s-%s' % (self.room, self.start_time, self.end_time)
+    
+    def save(self, *args, **kwargs):
+        if not self.start_time or not self.end_time:
+            raise ValueError('Start and end time must be provided')
+        
+        if self.start_time >= self.end_time:
+            raise ValueError('Start time must be before end time')
+        
+        super(Session, self).save(*args, **kwargs)
+        self.create_seats()
+    
+    def create_seats(self):
+        for row in range(1, self.room.rows+1):
+            for column in range(1, self.room.columns+1):
+                Seat.objects.create(
+                    row=row,
+                    column=column,
+                    room=self.room,
+                    session=self
+                )
 
 
 class Seat(models.Model):
