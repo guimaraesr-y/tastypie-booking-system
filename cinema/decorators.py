@@ -9,5 +9,5 @@ def handle_exceptions(view_func):
         except (BadRequest, NotFound) as e:
             return self.create_response(request, {'error': str(e)}, response_class=http.HttpBadRequest if isinstance(e, BadRequest) else http.HttpNotFound)
         except Exception as e:
-            return self.create_response(request, {'error': 'An unexpected error occurred: %s' % str(e)}, response_class=http.HttpInternalServerError)
+            return self.create_response(request, {'error': 'An unexpected error occurred: %s' % str(e)}, response_class=http.HttpApplicationError)
     return _wrapped_view
