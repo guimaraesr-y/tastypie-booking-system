@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
 
 from django.core.urlresolvers import reverse
 from tastypie.test import ResourceTestCaseMixin
@@ -20,6 +21,10 @@ class SeatResourceTest(ResourceTestCaseMixin, TestCase):
             "start_time": "10:00",
             "end_time": "11:00"
         })
+        self.user = User.objects.create_user(username='johndoe', email='johndoe@example.com', password='password')
+
+    def get_credentials(self):
+        return self.create_basic(username='johndoe', password='password')
 
     def test_find_seat(self):
         url = reverse('api_dispatch_detail', kwargs={
@@ -45,7 +50,7 @@ class SeatResourceTest(ResourceTestCaseMixin, TestCase):
         }
 
         response = self.api_client.post(self.api_url, data=seat_data)
-        self.assertHttpMethodNotAllowed(response)
+        self.assertHttpUnauthorized(response)
     
     def test_update_seat(self):
         url = reverse('api_dispatch_detail', kwargs={
@@ -70,3 +75,16 @@ class SeatResourceTest(ResourceTestCaseMixin, TestCase):
         })
         response = self.api_client.delete(url)
         self.assertHttpMethodNotAllowed(response)
+    
+    def test_reserve_seat(self):
+        url = reverse('api_reserve_seat', kwargs={
+            'resource_name': 'seat',
+            'api_name': 'v1',           
+            'pk': 1,
+        })
+        seat_data = {
+            "is_reserved": True
+        }
+
+        response = self.api_client.post(url, data=seat_data, authentication=self.get_credentials())
+        self.assertHttpOK(response)

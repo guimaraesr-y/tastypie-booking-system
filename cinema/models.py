@@ -60,7 +60,7 @@ class Seat(models.Model):
     column = models.IntegerField()
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
-    # reserved_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    reserved_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     is_reserved = models.BooleanField(default=False)
     
     @property
@@ -69,3 +69,14 @@ class Seat(models.Model):
     
     def __str__(self):
         return self.seat_id
+    
+    def reserve(self, user):
+        if self.is_reserved:
+            raise ValueError('Seat is already reserved')
+        
+        if Seat.objects.filter(session=self.session, is_reserved=True).count() >= self.room.total_seats:
+            raise ValueError('Room is full')
+    
+        self.reserved_by = user
+        self.is_reserved = True
+        self.save()
