@@ -1,6 +1,6 @@
 from tastypie.resources import ModelResource
 from tastypie.authorization import Authorization
-from tastypie.exceptions import BadRequest, NotFound
+from tastypie.exceptions import BadRequest, NotFound, Unauthorized
 from tastypie.utils import trailing_slash
 from django.contrib.auth.models import User
 from django.conf.urls import url
@@ -131,11 +131,5 @@ class SeatResource(ModelResource):
         resource_name = 'seat'
         always_return_data = True
         authorization = Authorization()
+        allowed_methods = ['get']
     
-    def obj_create(self, bundle, **kwargs):
-        try:
-            bundle = super(SeatResource, self).obj_create(bundle, **kwargs)
-        except Exception as e:
-            raise BadRequest(u'Error when creating seat: %s' % e.__str__())
-        
-        return bundle
