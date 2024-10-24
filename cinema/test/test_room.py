@@ -43,7 +43,10 @@ class RoomResourceTest(ResourceTestCaseMixin, TestCase):
     
     def test_get_rooms(self):
         response = self.api_client.get(self.api_url)
+        response_data = self.deserialize(response)
+        
         self.assertHttpOK(response)
+        self.assertGreater(len(response_data), 0)
     
     def test_get_one_room(self):
         url = reverse('api_dispatch_detail', kwargs={

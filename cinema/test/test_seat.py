@@ -82,9 +82,16 @@ class SeatResourceTest(ResourceTestCaseMixin, TestCase):
             'api_name': 'v1',           
             'pk': 1,
         })
-        seat_data = {
-            "is_reserved": True
-        }
 
-        response = self.api_client.post(url, data=seat_data, authentication=self.get_credentials())
+        response = self.api_client.post(url, authentication=self.get_credentials())
         self.assertHttpOK(response)
+    
+    def test_reserve_seat_unlogged(self):
+        url = reverse('api_reserve_seat', kwargs={
+            'resource_name': 'seat',
+            'api_name': 'v1',           
+            'pk': 1,
+        })
+
+        response = self.api_client.post(url)
+        self.assertHttpUnauthorized(response)
