@@ -21,10 +21,16 @@ class SeatResourceTest(ResourceTestCaseMixin, TestCase):
             "start_time": "10:00",
             "end_time": "11:00"
         })
-        self.user = User.objects.create_user(username='johndoe', email='johndoe@example.com', password='password')
+        
+        self.user_username = 'johndoe'
+        self.user_password = 'password'
+        
+        self.user = User.objects.create_user(username=self.user_username, email='johndoe@example.com')
+        self.user.set_password(self.user_password)
+        self.user.save()
 
     def get_credentials(self):
-        return self.create_basic(username='johndoe', password='password')
+        return self.create_basic(username=self.user_username, password=self.user_password)
 
     def test_find_seat(self):
         url = reverse('api_dispatch_detail', kwargs={

@@ -1,16 +1,17 @@
 from tastypie.resources import ModelResource
 from tastypie.authorization import Authorization
 from tastypie.exceptions import BadRequest, NotFound, Unauthorized
+from tastypie.http import HttpUnauthorized
 from tastypie.utils import trailing_slash
 from tastypie import fields
 from tastypie.authentication import BasicAuthentication
-from django.contrib.auth.models import User
 from django.conf.urls import url
 
+from .authotizations.seat_authorization import SeatAuthorization
 from .decorators import handle_exceptions
 from .validations.user_validator import UserValidator
 from .validations.room_validator import RoomValidator
-from .models import Profile, Room, Seat, Session
+from .models import User, Profile, Room, Seat, Session
 
 
 class UserResource(ModelResource):
@@ -20,13 +21,17 @@ class UserResource(ModelResource):
         authorization = Authorization()
         always_return_data = True
         validation = UserValidator()
+        excludes = ['password']
     
     def obj_create(self, bundle, **kwargs):
+        raw_password = bundle.data.get('password')
         birth_date = bundle.data.get('birth_date')
         bio = bundle.data.get('bio', '')
         
         try:
             bundle = super(UserResource, self).obj_create(bundle, **kwargs)
+            bundle.obj.set_password(raw_password)
+            bundle.obj.save()
         except Exception as e:
             raise BadRequest(u'Error when creating user: %s' % e.__str__())
         
@@ -131,18 +136,16 @@ class SeatResource(ModelResource):
         queryset = Seat.objects.all()
         resource_name = 'seat'
         always_return_data = True
-        authorization = Authorization()
+        authorization = SeatAuthorization()
         allowed_methods = ['get', 'post']
         authentication = BasicAuthentication()
-        
-    def obj_create(self, bundle, **kwargs): # shoukd be in authorization
-        raise Unauthorized("You are not authorized to create a seat.")
     
     def is_authenticated(self, request):
         if request.method == 'GET':
             return True
-        return super(SeatResource, self).is_authenticated(request)
         
+        return super(SeatResource, self).is_authenticated(request)    
+    
     def prepend_urls(self):
         return [
             url(r"^(?P<resource_name>%s)/(?P<pk>\d+)/reserve%s$" % 
@@ -152,10 +155,13 @@ class SeatResource(ModelResource):
     
     @handle_exceptions
     def reserve_seat(self, request, **kwargs):
-        seat_id = kwargs.get('pk')
-        seat = Seat.objects.get(pk=seat_id)
+        auth_result = self._meta.authentication.is_authenticated(request)
         
-        self.is_authenticated(request)
+        if not auth_result or isinstance(auth_result, HttpUnauthorized):
+            raise Unauthorized("You are not authorized to reserve a seat.")
+        
+        seat_id = kwargs.get('pk')
+        seat = Seat.objects.get(pk=seat_id)        
         seat.reserve(request.user)
         
         return self.create_response(

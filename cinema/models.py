@@ -2,10 +2,13 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+from tastypie.exceptions import Unauthorized
 
 from .utils import number_to_char
 
+User = get_user_model()
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -72,7 +75,7 @@ class Seat(models.Model):
     
     def reserve(self, user):
         if self.is_reserved:
-            raise ValueError('Seat is already reserved')
+            raise Unauthorized('Seat is already reserved')
         
         if Seat.objects.filter(session=self.session, is_reserved=True).count() >= self.room.total_seats:
             raise ValueError('Room is full')
