@@ -5,4 +5,4 @@ WORKDIR /workspace
 COPY requirements.txt /workspace
 RUN pip install -r requirements.txt
 
-CMD ["/bin/sh"]
+CMD ["/bin/bash"]
