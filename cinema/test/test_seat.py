@@ -101,3 +101,14 @@ class SeatResourceTest(ResourceTestCaseMixin, TestCase):
 
         response = self.api_client.post(url)
         self.assertHttpUnauthorized(response)
+    
+    def test_reserve_seat_not_found(self):
+        url = reverse('api_reserve_seat', kwargs={
+            'resource_name': 'seat',
+            'api_name': 'v1',           
+            'pk': 999,
+        })
+
+        response = self.api_client.post(url, authentication=self.get_credentials())
+        print(response)
+        self.assertHttpNotFound(response)

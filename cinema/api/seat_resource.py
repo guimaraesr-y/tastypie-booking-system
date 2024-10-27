@@ -1,5 +1,5 @@
 from tastypie.resources import ModelResource
-from tastypie.exceptions import Unauthorized
+from tastypie.exceptions import Unauthorized, NotFound
 from tastypie.http import HttpUnauthorized
 from tastypie.utils import trailing_slash
 from tastypie import fields
@@ -43,8 +43,13 @@ class SeatResource(ModelResource):
             raise Unauthorized("You are not authorized to reserve a seat.")
         
         seat_id = kwargs.get('pk')
-        seat = Seat.objects.get(pk=seat_id)        
-        seat.reserve(request.user)
+        
+        try:
+            bundle = self.build_bundle(request=request)
+            seat = self.obj_get(bundle=bundle, pk=seat_id)
+            seat.reserve(request.user)
+        except Seat.DoesNotExist:
+            raise NotFound("Seat not found.")
         
         return self.create_response(
             request, 
